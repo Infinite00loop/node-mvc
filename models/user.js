@@ -22,25 +22,25 @@ static findById(userId){
 }
 
 addToCart(product){
-  const cartProductIndex = this.cart.items.findIndex(cp => {
-    return cp.productId.toString() === product._id.toString();
-  });
+  // const cartProductIndex = this.cart.items.findIndex(cp => {
+  //   return cp.productId.toString() === product._id.toString();
+  // });
   let newQuantity =1;
-  const updatedCartItems= [...this.cart.items];
+  // const updatedCartItems= [...this.cart.items];
 
-  if(cartProductIndex>=0){
-    newQuantity= this.cart.items[cartProductIndex].quantity+1;
-    updatedCartItem[cartProductIndex].quantity= newQuantity;
-  }
-  else{
-    updatedCartItems.push({
-      productId: new ObjectId(product._id),
-      quantity: newQuantity
-    });
-  }
-  const updatedCart= {
-     items: [{productId:new ObjectId(product._id), quantity:1}]
-     };
+  // if(cartProductIndex>=0){
+  //   newQuantity= this.cart.items[cartProductIndex].quantity+1;
+  //   updatedCartItem[cartProductIndex].quantity= newQuantity;
+  // }
+  // else{
+  //   updatedCartItems.push({
+  //     productId: new ObjectId(product._id),
+  //     quantity: newQuantity
+  //   });
+  // }
+  // const updatedCart= {
+  //    items: [{productId:new ObjectId(product._id), quantity:1}]
+  //    };
   const db= getDb();
   return db
     .collection('users')
@@ -82,6 +82,37 @@ deleteItemFromCart(productId) {
       { _id: new ObjectId(this._id) },
       { $set: { cart: { items: updatedCartItems } } }
     );
+}
+addOrder() {
+  const db = getDb();
+  return this.getCart()
+    .then(products => {
+      const order = {
+        items: products,
+        user: {
+          _id: new ObjectId(this._id),
+          name: this.name
+        }
+      };
+      return db.collection('orders').insertOne(order);
+    })
+    .then(result => {
+      this.cart = { items: [] };
+      return db
+        .collection('users')
+        .updateOne(
+          { _id: new ObjectId(this._id) },
+          { $set: { cart: { items: [] } } }
+        );
+    });
+}
+
+getOrders() {
+  const db = getDb();
+  return db
+    .collection('orders')
+    .find({ 'user._id': new ObjectId(this._id) })
+    .toArray();
 }
 }
 
